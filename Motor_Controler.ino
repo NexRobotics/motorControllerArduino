@@ -44,12 +44,12 @@ typedef struct silnik
 };
 
 // Structure schema: (pwm, inA, inB, encoder inA, encoder inB, isRight?)
-silnik motor1{m1PWM, m1k1, m1k2, m1e1, m1e2, 0};
-silnik motor2{m2PWM, m2k1, m2k2, m2e1, m2e2, 1};
-silnik motor3{m3PWM, m3k1, m3k2, m3e1, m3e2, 0};
-silnik motor4{m4PWM, m4k1, m4k2, m4e1, m4e2, 1};
-silnik motor5{m4PWM, m4k1, m4k2, m4e1, m4e2, 1};
-silnik motor6{m4PWM, m4k1, m4k2, m4e1, m4e2, 1};
+silnik motor1{12, 22, 23, m1e1, m1e2, 1};
+silnik motor2{3, 24, 25, m1e1, m1e2, 0};
+silnik motor3{4, 26, 27, m1e1, m1e2, 1};
+silnik motor4{5, 28, 29, m1e1, m1e2, 0};
+silnik motor5{7, 6, 8, m1e1, m1e2, 1};
+silnik motor6{10, 9, 11, m1e1, m1e2, 0};
 
 void initMotor(struct silnik motor)
 {
@@ -66,7 +66,6 @@ void initMotor(struct silnik motor)
 
 void SetSpeed(struct silnik motor, int wypelnienie)
 {
-  analogWrite(motor.pwm, wypelnienie);
   if(wypelnienie==0)
   {
     digitalWrite(motor.kierunek1, HIGH);
@@ -76,12 +75,14 @@ void SetSpeed(struct silnik motor, int wypelnienie)
   {
   if(wypelnienie>0)
   {
+    analogWrite(motor.pwm, wypelnienie);
     digitalWrite(motor.kierunek1, HIGH);
     digitalWrite(motor.kierunek2, LOW);
   }
 
   else if(wypelnienie<0)
   {
+    analogWrite(motor.pwm, -wypelnienie);
     digitalWrite(motor.kierunek1, LOW);
     digitalWrite(motor.kierunek2, HIGH);
   }
@@ -90,12 +91,14 @@ void SetSpeed(struct silnik motor, int wypelnienie)
   {
   if(wypelnienie>0)
   { 
+    analogWrite(motor.pwm, wypelnienie);
     digitalWrite(motor.kierunek2, HIGH);
     digitalWrite(motor.kierunek1, LOW);
   }
 
   else if(wypelnienie<0)
   {
+    analogWrite(motor.pwm, -wypelnienie);
     digitalWrite(motor.kierunek2, LOW);
     digitalWrite(motor.kierunek1, HIGH);
   }
@@ -108,7 +111,7 @@ String inputString = "";
 volatile boolean newMessageReceived = false;
 //Pulses Per Revolution, Revolutions Per Revolution
 int PPR, RPR;
-int u[6] = {0, 0, 0, 0, 0, 0};
+volatile int u[6] = {0, 0, 0, 0, 0, 0};
 int v1=0, e1=0, v2=0, e2=0, v3=0, e3=0, v4=0, e4=0;
 int PowerOnMotor1 = 0, PowerOnMotor2 = 0, PowerOnMotor3 = 0, PowerOnMotor4 = 0;
 int PWMSpeed[6] = {0, 0, 0, 0, 0, 0};
@@ -118,7 +121,7 @@ unsigned long startingTime = 0;
 int slopeCounter1 = 0, slopeCounter2 = 0, slopeCounter3 = 0, slopeCounter4 = 0;
 byte Kp = 0;
 byte ConstantPrint = NO_PRINT;
-boolean SmartDrive = 0;
+boolean SmartDrive = 1;
 int mios = 1000; //Maksymalna Ilość Obrotów Silnika
 
 void setup()
@@ -314,10 +317,18 @@ void loop()
       SetSpeed(motor6, u[5]);
 
       delay(2000);
+      for(int i=0; i<6; i++)
+      {
+      Serial.print(u[i]);
+      Serial.print("   ");
+      }
+      Serial.println("zeroing...");
       u[0]=0;
       u[1]=0;
       u[2]=0;
       u[3]=0;
+      u[4]=0;
+      u[5]=0;
       
 
   }
@@ -385,7 +396,7 @@ void handleNewMessage()
       for (int i=spaceBar+1; i<(buffer2.length()); i++)
         bufferMotor += buffer2.charAt(i);
  
-      //Serial.println("Set command detected!");
+      Serial.println("Set command detected!");
       if(bufferMotor=="motor1"){
       u[0]= buffer2.toInt();
       if (u[0]>mios)
@@ -429,7 +440,7 @@ void handleNewMessage()
       else if (u[3]<-mios)
           u[4]= -mios;
       }
-      else if(bufferMotor=="motor5"){
+      else if(bufferMotor=="motor6"){
        u[5]= buffer2.toInt();
       if (u[5]>mios)
           u[5]= mios;
