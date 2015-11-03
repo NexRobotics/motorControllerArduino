@@ -43,12 +43,12 @@ typedef struct silnik
 };
 
 // Structure schema: (pwm, inA, inB, encoder inA, encoder inB, isRight?)
-silnik motor1{12, 22, 23, m1e1, m1e2, 1};
-silnik motor2{3, 24, 25, m1e1, m1e2, 0};
-silnik motor3{4, 26, 27, m1e1, m1e2, 1};
-silnik motor4{5, 28, 29, m1e1, m1e2, 0};
-silnik motor5{7, 6, 8, m1e1, m1e2, 1};
-silnik motor6{10, 9, 11, m1e1, m1e2, 0};
+silnik motor1{12, 22, 31, m1e1, m1e2, 0, 0};
+silnik motor2{3, 24, 33, m1e1, m1e2, 0, 1};
+silnik motor3{4, 26, 27, m1e1, m1e2, 0, 0};
+silnik motor4{5, 28, 29, m1e1, m1e2, 0, 1};
+silnik motor5{7, 6, 8, m1e1, m1e2, 0, 0};
+silnik motor6{10, 9, 11, m1e1, m1e2, 0, 1};
 
 void initMotor(struct silnik motor)
 {
@@ -57,6 +57,9 @@ void initMotor(struct silnik motor)
 
   pinMode(motor.kierunek1, OUTPUT);
   pinMode(motor.kierunek2, OUTPUT);
+
+  digitalWrite(motor.kierunek1, LOW);
+  digitalWrite(motor.kierunek2, LOW);
 
   pinMode(motor.pwm, OUTPUT);
 
@@ -69,6 +72,7 @@ void SetSpeed(struct silnik motor, int wypelnienie)
   {
     digitalWrite(motor.kierunek1, HIGH);
     digitalWrite(motor.kierunek2, HIGH);
+    analogWrite(motor.pwm, 0);
   }
   else if (!motor.dir_correction)
   {
