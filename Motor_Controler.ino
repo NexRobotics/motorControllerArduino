@@ -1,5 +1,6 @@
 #define NO_PRINT 0
 #define PRINT_SPEED 1
+#define Something
 
 //mXeY - silnik X, pin enkodera Y
 #define m1e1 23
