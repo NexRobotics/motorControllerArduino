@@ -1,6 +1,5 @@
 #define NO_PRINT 0
 #define PRINT_SPEED 1
-#define Something
 
 //mXeY - silnik X, pin enkodera Y
 #define m1e1 23
@@ -49,7 +48,7 @@ silnik motor2{3, 24, 33, m1e1, m1e2, 0, 1};
 silnik motor3{4, 26, 27, m1e1, m1e2, 0, 0};
 silnik motor4{5, 28, 29, m1e1, m1e2, 0, 1};
 silnik motor5{7, 6, 8, m1e1, m1e2, 0, 0};
-silnik motor6{10, 9, 11, m1e1, m1e2, 0, 1};
+silnik motor6{10, 9, 11, m1e1, m1e2, 0, 11};
 
 void initMotor(struct silnik motor)
 {
@@ -121,6 +120,7 @@ int PowerOnMotor1 = 0, PowerOnMotor2 = 0, PowerOnMotor3 = 0, PowerOnMotor4 = 0;
 int PWMSpeed[6] = {0, 0, 0, 0, 0, 0};
 boolean slopeRise1 = 1, slopeFall1 = 0, slopeRise2 = 1, slopeFall2 = 0, slopeRise3 = 1, slopeFall3 = 0, slopeRise4 = 1, slopeFall4 = 0;
 byte timeCounter = 0;
+volatile unsigned int timeOfLastMessageReceived = 0;
 unsigned long startingTime = 0;
 int slopeCounter1 = 0, slopeCounter2 = 0, slopeCounter3 = 0, slopeCounter4 = 0;
 byte Kp = 0;
@@ -150,148 +150,159 @@ void setup()
   RPR = 10;
   
   Kp = 2;
+
+  pinMode(13, OUTPUT);
+  digitalWrite(13, LOW);
+  delay(1000);
+  digitalWrite(13, HIGH);
+  
 }
 
 void loop()
 {
   if (newMessageReceived)
     handleNewMessage();
-    
+
+  if(millis() - timeOfLastMessageReceived > 100)
+  {
+    for(int i=0; i<6; i++)
+      u[i] = 0;
+  }
   if (SmartDrive)
   {
-    slopeCounter1 = 0;
-    slopeCounter2 = 0;
-    slopeCounter3 = 0;
-    slopeCounter4 = 0;
-    startingTime = micros();
-    for(unsigned i = 0; i<5000; i++)
-    {
-      if (digitalRead(m1e1) && slopeRise1)
-      {
-          if(digitalRead(m1e2))
-              slopeCounter1--;
-          else
-              slopeCounter1++;
-          slopeRise1 = 0;
-          slopeFall1 = 1;
-      }
-      
-      if (!digitalRead(m1e1) && slopeFall1)
-      {
-          if(digitalRead(m1e2))
-              slopeCounter1++;
-          else
-              slopeCounter1--;
-          slopeRise1 = 1;
-          slopeFall1 = 0;
-      }
-  //----------------------------------------------------------
-      if (digitalRead(m2e1) && slopeRise2)
-      {
-          if(digitalRead(m2e2))
-              slopeCounter2--;
-          else
-              slopeCounter2++;
-          slopeRise2 = 0;
-          slopeFall2 = 1;
-      }
-      
-      if (!digitalRead(m2e1) && slopeFall2)
-      {
-          if(digitalRead(m2e2))
-              slopeCounter2++;
-          else
-              slopeCounter2--;
-          slopeRise2 = 1;
-          slopeFall2 = 0;
-      }
-  //----------------------------------------------------------
-      if (digitalRead(m3e1) && slopeRise3)
-      {
-          if(digitalRead(m3e2))
-              slopeCounter3--;
-          else
-              slopeCounter3++;
-          slopeRise3 = 0;
-          slopeFall3 = 1;
-      }
-      
-      if (!digitalRead(m3e1) && slopeFall3)
-      {
-          if(digitalRead(m3e2))
-              slopeCounter3++;
-          else
-              slopeCounter3--;
-          slopeRise3 = 1;
-          slopeFall3 = 0;
-      }
-  //----------------------------------------------------------
-      if (digitalRead(m4e1) && slopeRise4)
-      {
-          if(digitalRead(m4e2))
-              slopeCounter4--;
-          else
-              slopeCounter4++;
-          slopeRise4 = 0;
-          slopeFall4 = 1;
-      }
-      
-      if (!digitalRead(m4e1) && slopeFall4)
-      {
-          if(digitalRead(m4e2))
-              slopeCounter4++;
-          else
-              slopeCounter4--;
-          slopeRise4 = 1;
-          slopeFall4 = 0;
-      }
-    }
-    
-    czas = micros() - startingTime;
-  //  Serial.print("#Enkoders, ");
-  //  Serial.print(slopeCounter1);
-  //  Serial.print(", ");
-  //  Serial.print(slopeCounter2);
-  //  Serial.print(", ");
-  //  Serial.print(slopeCounter3);
-  //  Serial.print(", ");
-  //  Serial.print(slopeCounter4);
-  //  Serial.print(", ");
-  //  Serial.println(); // oddzielenie pustą linią dla zwiększenia czytelności
-    v1 = slopeCounter1*((60000000)/(RPR*PPR*(long)czas));
-    v2 = slopeCounter2*((60000000)/(RPR*PPR*(long)czas));
-    v3 = slopeCounter3*((60000000)/(RPR*PPR*(long)czas));
-    v4 = slopeCounter4*((60000000)/(RPR*PPR*(long)czas));
-
-    e1 = u[0]-v1;
-    e2 = u[1]-v2;
-    e3 = u[2]-v3;
-    e4 = u[3]-v4;
-    
-    PowerOnMotor1 += Kp*e1;
-    PowerOnMotor2 += Kp*e2;
-    PowerOnMotor3 += Kp*e3;
-    PowerOnMotor4 += Kp*e4;
-    
-    if(PowerOnMotor1 > 40000)
-      PowerOnMotor1 = 40000;
-    else if(PowerOnMotor1< -40000)
-      PowerOnMotor1 = -40000;
-
-      if(PowerOnMotor2 > 40000)
-      PowerOnMotor2 = 40000;
-    else if(PowerOnMotor2 < -40000)
-      PowerOnMotor2 = -40000;
-
-      if(PowerOnMotor3 > 40000)
-      PowerOnMotor3 = 40000;
-    else if(PowerOnMotor3 < -40000)
-      PowerOnMotor3 = -40000;
-
-      if(PowerOnMotor4 > 40000)
-      PowerOnMotor4 = 40000;
-    else if(PowerOnMotor4 < -40000)
-      PowerOnMotor4 = -40000;
+//    slopeCounter1 = 0;
+//    slopeCounter2 = 0;
+//    slopeCounter3 = 0;
+//    slopeCounter4 = 0;
+//    startingTime = micros();
+//    for(unsigned i = 0; i<5000; i++)
+//    {
+//      if (digitalRead(m1e1) && slopeRise1)
+//      {
+//          if(digitalRead(m1e2))
+//              slopeCounter1--;
+//          else
+//              slopeCounter1++;
+//          slopeRise1 = 0;
+//          slopeFall1 = 1;
+//      }
+//      
+//      if (!digitalRead(m1e1) && slopeFall1)
+//      {
+//          if(digitalRead(m1e2))
+//              slopeCounter1++;
+//          else
+//              slopeCounter1--;
+//          slopeRise1 = 1;
+//          slopeFall1 = 0;
+//      }
+//  //----------------------------------------------------------
+//      if (digitalRead(m2e1) && slopeRise2)
+//      {
+//          if(digitalRead(m2e2))
+//              slopeCounter2--;
+//          else
+//              slopeCounter2++;
+//          slopeRise2 = 0;
+//          slopeFall2 = 1;
+//      }
+//      
+//      if (!digitalRead(m2e1) && slopeFall2)
+//      {
+//          if(digitalRead(m2e2))
+//              slopeCounter2++;
+//          else
+//              slopeCounter2--;
+//          slopeRise2 = 1;
+//          slopeFall2 = 0;
+//      }
+//  //----------------------------------------------------------
+//      if (digitalRead(m3e1) && slopeRise3)
+//      {
+//          if(digitalRead(m3e2))
+//              slopeCounter3--;
+//          else
+//              slopeCounter3++;
+//          slopeRise3 = 0;
+//          slopeFall3 = 1;
+//      }
+//      
+//      if (!digitalRead(m3e1) && slopeFall3)
+//      {
+//          if(digitalRead(m3e2))
+//              slopeCounter3++;
+//          else
+//              slopeCounter3--;
+//          slopeRise3 = 1;
+//          slopeFall3 = 0;
+//      }
+//  //----------------------------------------------------------
+//      if (digitalRead(m4e1) && slopeRise4)
+//      {
+//          if(digitalRead(m4e2))
+//              slopeCounter4--;
+//          else
+//              slopeCounter4++;
+//          slopeRise4 = 0;
+//          slopeFall4 = 1;
+//      }
+//      
+//      if (!digitalRead(m4e1) && slopeFall4)
+//      {
+//          if(digitalRead(m4e2))
+//              slopeCounter4++;
+//          else
+//              slopeCounter4--;
+//          slopeRise4 = 1;
+//          slopeFall4 = 0;
+//      }
+//    }
+//    
+//    czas = micros() - startingTime;
+//  //  Serial.print("#Enkoders, ");
+//  //  Serial.print(slopeCounter1);
+//  //  Serial.print(", ");
+//  //  Serial.print(slopeCounter2);
+//  //  Serial.print(", ");
+//  //  Serial.print(slopeCounter3);
+//  //  Serial.print(", ");
+//  //  Serial.print(slopeCounter4);
+//  //  Serial.print(", ");
+//  //  Serial.println(); // oddzielenie pustą linią dla zwiększenia czytelności
+//    v1 = slopeCounter1*((60000000)/(RPR*PPR*(long)czas));
+//    v2 = slopeCounter2*((60000000)/(RPR*PPR*(long)czas));
+//    v3 = slopeCounter3*((60000000)/(RPR*PPR*(long)czas));
+//    v4 = slopeCounter4*((60000000)/(RPR*PPR*(long)czas));
+//
+//    e1 = u[0]-v1;
+//    e2 = u[1]-v2;
+//    e3 = u[2]-v3;
+//    e4 = u[3]-v4;
+//    
+//    PowerOnMotor1 += Kp*e1;
+//    PowerOnMotor2 += Kp*e2;
+//    PowerOnMotor3 += Kp*e3;
+//    PowerOnMotor4 += Kp*e4;
+//    
+//    if(PowerOnMotor1 > 40000)
+//      PowerOnMotor1 = 40000;
+//    else if(PowerOnMotor1< -40000)
+//      PowerOnMotor1 = -40000;
+//
+//      if(PowerOnMotor2 > 40000)
+//      PowerOnMotor2 = 40000;
+//    else if(PowerOnMotor2 < -40000)
+//      PowerOnMotor2 = -40000;
+//
+//      if(PowerOnMotor3 > 40000)
+//      PowerOnMotor3 = 40000;
+//    else if(PowerOnMotor3 < -40000)
+//      PowerOnMotor3 = -40000;
+//
+//      if(PowerOnMotor4 > 40000)
+//      PowerOnMotor4 = 40000;
+//    else if(PowerOnMotor4 < -40000)
+//      PowerOnMotor4 = -40000;
 
 //    if (u1 == 0)
 //      SetSpeed(motor1, 0);
@@ -320,19 +331,19 @@ void loop()
       SetSpeed(motor5, u[4]);
       SetSpeed(motor6, u[5]);
 
-      delay(2000);
-      for(int i=0; i<6; i++)
-      {
-      Serial.print(u[i]);
-      Serial.print("   ");
-      }
-      Serial.println("zeroing...");
-      u[0]=0;
-      u[1]=0;
-      u[2]=0;
-      u[3]=0;
-      u[4]=0;
-      u[5]=0;
+//      delay(2000);
+//      for(int i=0; i<6; i++)
+//      {
+//      Serial.print(u[i]);
+//      Serial.print("   ");
+//      }
+//      Serial.println("zeroing...");
+//      u[0]=0;
+//      u[1]=0;
+//      u[2]=0;
+//      u[3]=0;
+//      u[4]=0;
+//      u[5]=0;
       
 
   }
@@ -363,6 +374,7 @@ void loop()
 
 
 void serialEvent() {
+  digitalWrite(13, LOW);
   while (Serial.available()) 
   {
     // get the new byte:
@@ -384,89 +396,53 @@ void handleNewMessage()
     String buffer = "";
     buffer.reserve(10);
     String buffer2 = "";
+    String decomposedMessage[7];
+    for(int i = 0; i<7; i++)
+    {
+      decomposedMessage[i].reserve(10);
+      decomposedMessage[i] = "";
+    }
+      
     buffer2.reserve(10);
     String bufferMotor = "";
     bufferMotor.reserve(10);
     for (int i=0; i<spaceBar; i++)
       buffer += inputString.charAt(i);
 
-//    spaceBar = inputString.indexOf(' ');
-    for (int i=spaceBar+1; i<(inputString.length()-1); i++)
-      buffer2 += inputString.charAt(i);
-      
-    if (buffer == "Set" || buffer == "SetSpeed")
+    for(int indexPtr = 0, segmentPtr = 0; indexPtr<(inputString.length()-1) && segmentPtr<7; indexPtr++)
     {
-      spaceBar = buffer2.indexOf(' ');
-      for (int i=spaceBar+1; i<(buffer2.length()); i++)
-        bufferMotor += buffer2.charAt(i);
- 
-      Serial.println("Set command detected!");
-      if(bufferMotor=="motor1"){
-      u[0]= buffer2.toInt();
-      if (u[0]>mios)
-          u[0] = mios;
-      else if (u[0]<-mios)
-          u[0]= -mios;
-        
-      e1 = u[0]-v1;
-      }
-      else if(bufferMotor=="motor2"){
-      u[1]= buffer2.toInt();
-      if (u[1]>mios)
-          u[1]= mios;
-      else if (u[1]<-mios)
-          u[1]= -mios;
-        
-      e2 = u[1]-v2;
-      }
-      else if(bufferMotor=="motor3"){
-       u[2]= buffer2.toInt();
-      if (u[2]>mios)
-          u[2]= mios;
-      else if (u[2]<-mios)
-          u[2] = -mios;
-        
-      e3 = u[2]-v3;
-      }
-      else if(bufferMotor=="motor4"){
-       u[3]= buffer2.toInt();
-      if (u[3]>mios)
-          u[3]= mios;
-      else if (u[3]<-mios)
-          u[3]= -mios;
-        
-      e4 = u[3]-v4;
-      }
-      else if(bufferMotor=="motor5"){
-       u[4]= buffer2.toInt();
-      if (u[4]>mios)
-          u[4]= mios;
-      else if (u[3]<-mios)
-          u[4]= -mios;
-      }
-      else if(bufferMotor=="motor6"){
-       u[5]= buffer2.toInt();
-      if (u[5]>mios)
-          u[5]= mios;
-      else if (u[5]<-mios)
-          u[5]= -mios;
-      }
-      else if(bufferMotor="all")
+      decomposedMessage[segmentPtr] +=  inputString.charAt(indexPtr);
+      if(inputString.charAt(indexPtr+1) == ' ')
       {
-        int uForAll = buffer2.toInt();
-        if (uForAll > mios)
-          uForAll = mios;
-        else if (uForAll < -mios)
-          uForAll = -mios;
-
-        for(uint8_t i = 0; i<6; i++)
-          u[i] = uForAll;
-          
+        segmentPtr++; 
+        indexPtr++;
       }
-      
-      
-      SmartDrive = 1;
     }
+
+//    spaceBar = inputString.indexOf(' ');
+//    for (int i=spaceBar+1; i<(inputString.length()-1); i++)
+//      buffer2 += inputString.charAt(i);
+
+    if(decomposedMessage[0] == "Set")
+    {
+      timeOfLastMessageReceived = millis();
+      for (int i=0; i<6; i++)
+      {
+        int buffer = decomposedMessage[i+1].toInt();
+        if(buffer > 0)
+          u[i] = min(buffer, mios);
+        else
+          u[i] = max(buffer, -mios);
+      }
+
+      for (int i=0; i<6; i++)
+      {
+        Serial.print(u[i]);
+        Serial.print(", ");
+      }
+      Serial.println("");
+    }
+
     else if (buffer == "SetKp")
     {
       Kp = buffer2.toInt();
