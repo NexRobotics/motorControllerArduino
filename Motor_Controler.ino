@@ -163,7 +163,7 @@ void loop()
   if (newMessageReceived)
     handleNewMessage();
 
-  if(millis() - timeOfLastMessageReceived > 100)
+  if(millis() - timeOfLastMessageReceived > 200)
   {
     for(int i=0; i<6; i++)
       u[i] = 0;
@@ -435,12 +435,12 @@ void handleNewMessage()
           u[i] = max(buffer, -mios);
       }
 
-      for (int i=0; i<6; i++)
-      {
-        Serial.print(u[i]);
-        Serial.print(", ");
-      }
-      Serial.println("");
+//      for (int i=0; i<6; i++)
+//      {
+//        Serial.print(u[i]);
+//        Serial.print(", ");
+//      }
+//      Serial.println("");
     }
 
     else if (buffer == "SetKp")
@@ -508,6 +508,6 @@ void handleNewMessage()
     Serial.println("Message ERROR\n\rInvalid command!\n\r");
       
   newMessageReceived = false;
-  inputString = "";
+  inputString.remove(0);
 }
 
