@@ -11,7 +11,7 @@ import thread
 ENABLE_MOTORS = True
 
 HOST = ''
-PORT = 50006
+PORT = 50007
 
 def anyEqual(list, value):
     for i in range(0, len(list)):
@@ -101,5 +101,5 @@ if MotorDriverPort.isOpen() or not ENABLE_MOTORS:
    finally:
       #print '0 0'
       connection.close()
-      #MotorDriverPort.write('Set 0 0 0 0 0 0\n')
-      #MotorDriverPort.write.close()
+      MotorDriverPort.write('Set 0 0 0 0 0 0\n')
+      MotorDriverPort.write.close()
