@@ -8,8 +8,10 @@ from time import sleep
 from time import time
 import thread
 
+ENABLE_MOTORS = True
+
 HOST = ''
-PORT = 50007
+PORT = 50006
 
 def anyEqual(list, value):
     for i in range(0, len(list)):
@@ -23,13 +25,18 @@ communicationSocket.listen(1)
 
 print 'Connecting device...'
 portnames = listPorts.serial_ports()
-openedPort = []*len(portnames)
+print portnames
+openedPort = ['']*len(portnames)
 for i in range(0, len(portnames)):
    openedPort[i] = serial.Serial(portnames[i], 115200, timeout=1)
 
-#MotorDriverPort = openedPort[0]
+if(ENABLE_MOTORS):
+   MotorDriverPort = openedPort[0]
+
 print 'Waiting for client...'
 connection, addr = communicationSocket.accept()
+
+print 'Client connected...'
 
 connection.settimeout(0.05)
 
@@ -45,17 +52,16 @@ sleep(2)
 
 lastDataReceivedTime = time()
 
-if 1:#MotorDriverPort.isOpen():
+if MotorDriverPort.isOpen() or not ENABLE_MOTORS:
    try:
       while 1:
          readable, writable, exceptional = select([connection], [], [], 0)
          if readable:
+            print readable
             receivedData = connection.recv(1024)
-            print receivedData
 
             if receivedData:
                lastDataReceivedTime = time()
-               print lastDataReceivedTime
                RPower = 0
                LPower = 0
                receivedData = receivedData.split()
@@ -72,25 +78,28 @@ if 1:#MotorDriverPort.isOpen():
                   RPower = RPower - 70
                   LPower = LPower + 70
 
-               #MotorDriverPort.write('Set '+ LPower +' '+ RPower +' '+ LPower +' '+ RPower +' '+ LPower +' '+ RPower +'\n')
-               print str(RPower) + ' ' + str(LPower)
+               if(ENABLE_MOTORS):
+                  MotorDriverPort.write('Set '+ str(LPower) +' '+ str(RPower) +' '+ str(LPower) +' '+ str(RPower) +' '+ str(LPower) +' '+ str(RPower) +'\n')
+               print 'Direct: ' + str(RPower) + ' ' + str(LPower)
+               sleep(0.1)
          elif (lastDataReceivedTime + 0.5) > time():
-            #MotorDriverPort.write('Set '+ LPower +' '+ RPower +' '+ LPower +' '+ RPower +' '+ LPower +' '+ RPower +'\n')
-            print str(RPower) + ' ' + str(LPower)
-            print 'Still holding...'
+            if(ENABLE_MOTORS):
+               MotorDriverPort.write('Set '+ str(LPower) +' '+ str(RPower) +' '+ str(LPower) +' '+ str(RPower) +' '+ str(LPower) +' '+ str(RPower) +'\n')
+            print 'Holding: ' + str(RPower) + ' ' + str(LPower)
             sleep(0.1)
          else:
-            print '0 0'
             RPower = 0
             LPower = 0
             sleep(0.1)
-            #MotorDriverPort.write('Set '+ LPower +' '+ RPower +' '+ LPower +' '+ RPower +' '+ LPower +' '+ RPower +'\n')
+            if (ENABLE_MOTORS):
+               MotorDriverPort.write('Set '+ str(LPower) +' '+ str(RPower) +' '+ str(LPower) +' '+ str(RPower) +' '+ str(LPower) +' '+ str(RPower) +'\n')
+            print 'Zeroing: ' + str(RPower) + ' ' + str(LPower)
 
 
              
 
    finally:
-      print '0 0'
+      #print '0 0'
       connection.close()
       #MotorDriverPort.write('Set 0 0 0 0 0 0\n')
       #MotorDriverPort.write.close()
