@@ -12,7 +12,7 @@ ENABLE_MOTORS = True
 DEBUG = False
 
 HOST = ''
-PORT = 50008
+PORT = 50007
 
 def anyEqual(list, value):
     for i in range(0, len(list)):
@@ -26,7 +26,6 @@ communicationSocket.listen(1)
 
 print 'Connecting device...'
 portnames = listPorts.serial_ports()
-print portnames
 openedPort = []
 for i in range(0, len(portnames)):
    if '/dev/ttyACM' in portnames[i]:
@@ -57,14 +56,17 @@ for i in range(0, len(portFunctions)):
 
 MotorDriverPort = openedPort[motorDriverIndex]
 
-print 'Waiting for client...'
+print 'Waiting for client on port', PORT
 connection, addr = communicationSocket.accept()
 
 print 'Client connected...'
 
+if not DEBUG:
+   print 'Silent mode activated...'
+
 connection.settimeout(0.05)
 
-motorPower = 80
+motorPower = 90
 RPower = 0
 LPower = 0
 receivedData = ''
@@ -81,8 +83,6 @@ if MotorDriverPort.isOpen() or not ENABLE_MOTORS:
       while 1:
          readable, writable, exceptional = select([connection], [], [], 0)
          if readable:
-            if DEBUG:
-               print readable
             receivedData = connection.recv(1024)
 
             if receivedData:
@@ -91,26 +91,28 @@ if MotorDriverPort.isOpen() or not ENABLE_MOTORS:
                LPower = 0
                receivedData = receivedData.split()
                if anyEqual(receivedData, Commands[0]):
-                  RPower = RPower + 70
-                  LPower = LPower + 70
+                  RPower = RPower + motorPower
+                  LPower = LPower + motorPower
                if anyEqual(receivedData, Commands[1]):
-                  RPower = RPower - 70
-                  LPower = LPower - 70
+                  RPower = RPower - motorPower
+                  LPower = LPower - motorPower
                if anyEqual(receivedData, Commands[2]):
-                  RPower = RPower + 70
-                  LPower = LPower - 70
+                  RPower = RPower + motorPower
+                  LPower = LPower - motorPower
                if anyEqual(receivedData, Commands[3]):
-                  RPower = RPower - 70
-                  LPower = LPower + 70
+                  RPower = RPower - motorPower
+                  LPower = LPower + motorPower
 
                if(ENABLE_MOTORS):
                   MotorDriverPort.write('Set '+ str(LPower) +' '+ str(RPower) +' '+ str(LPower) +' '+ str(RPower) +' '+ str(LPower) +' '+ str(RPower) +'\n')
-               print 'Direct: ' + str(RPower) + ' ' + str(LPower)
+               if DEBUG:
+                  print 'Direct: ' + str(RPower) + ' ' + str(LPower)
                sleep(0.1)
          elif (lastDataReceivedTime + 0.5) > time():
             if(ENABLE_MOTORS):
                MotorDriverPort.write('Set '+ str(LPower) +' '+ str(RPower) +' '+ str(LPower) +' '+ str(RPower) +' '+ str(LPower) +' '+ str(RPower) +'\n')
-            print 'Holding: ' + str(RPower) + ' ' + str(LPower)
+            if DEBUG:
+               print 'Holding: ' + str(RPower) + ' ' + str(LPower)
             sleep(0.1)
          else:
             RPower = 0
@@ -118,7 +120,8 @@ if MotorDriverPort.isOpen() or not ENABLE_MOTORS:
             sleep(0.1)
             if (ENABLE_MOTORS):
                MotorDriverPort.write('Set '+ str(LPower) +' '+ str(RPower) +' '+ str(LPower) +' '+ str(RPower) +' '+ str(LPower) +' '+ str(RPower) +'\n')
-            print 'Zeroing: ' + str(RPower) + ' ' + str(LPower)
+            if DEBUG:
+               print 'Zeroing: ' + str(RPower) + ' ' + str(LPower)
 
 
              
