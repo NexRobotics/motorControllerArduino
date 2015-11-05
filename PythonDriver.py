@@ -9,9 +9,10 @@ from time import time
 import thread
 
 ENABLE_MOTORS = True
+DEBUG = False
 
 HOST = ''
-PORT = 50007
+PORT = 50008
 
 def anyEqual(list, value):
     for i in range(0, len(list)):
@@ -28,24 +29,30 @@ portnames = listPorts.serial_ports()
 print portnames
 openedPort = []
 for i in range(0, len(portnames)):
-   if '/dev/tty' in portnames[i]:
+   if '/dev/ttyACM' in portnames[i]:
       openedPort.append(serial.Serial(portnames[i], 115200, timeout=1))
+
+sleep(2)
 
 motorDriverIndex = 0
 SensorsIndex = 0
 portFunctions = []
+
 for i in range(0, len(openedPort)):
    if openedPort[i].isOpen():
       openedPort[i].write('GET\n')
       sleep(0.1)
       portFunctions.append(openedPort[i].readline())
-   else
+   else:
       portFunctions.append('Closed')
+
+print portFunctions
    
 for i in range(0, len(portFunctions)):
-   if portFunctions[i] == "Arduino Motor Driver\n"
+   if portFunctions[i] == "Arduino Motor Driver by MtK\r\n":
       motorDriverIndex = i
-   elif portFunctions[i] == "EchoModule with 9axis, by MtK\n":
+      print "MotorDriver detected on port", portnames[i]
+   elif portFunctions[i] == "EchoModule with 9axis, by MtK\r\n":
       SensorsIndex = i
 
 MotorDriverPort = openedPort[motorDriverIndex]
@@ -57,7 +64,7 @@ print 'Client connected...'
 
 connection.settimeout(0.05)
 
-motorPower = 60
+motorPower = 80
 RPower = 0
 LPower = 0
 receivedData = ''
@@ -74,7 +81,8 @@ if MotorDriverPort.isOpen() or not ENABLE_MOTORS:
       while 1:
          readable, writable, exceptional = select([connection], [], [], 0)
          if readable:
-            print readable
+            if DEBUG:
+               print readable
             receivedData = connection.recv(1024)
 
             if receivedData:
@@ -119,4 +127,4 @@ if MotorDriverPort.isOpen() or not ENABLE_MOTORS:
       #print '0 0'
       connection.close()
       MotorDriverPort.write('Set 0 0 0 0 0 0\n')
-      MotorDriverPort.write.close()
+      MotorDriverPort.close()
