@@ -52,8 +52,8 @@ for i in range(0, len(portFunctions)):
    if portFunctions[i] == "Arduino Motor Driver by MtK\r\n":
       motorDriverIndex = i
       print "MotorDriver detected on port", portnames[i]
-   elif portFunctions[i] == "EchoModule with 9axis, by MtK\r\n":
-      SensorsIndex = i
+   else:
+      openedPort[i].close()
 
 MotorDriverPort = openedPort[motorDriverIndex]
 
