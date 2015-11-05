@@ -26,12 +26,29 @@ communicationSocket.listen(1)
 print 'Connecting device...'
 portnames = listPorts.serial_ports()
 print portnames
-openedPort = ['']*len(portnames)
+openedPort = []
 for i in range(0, len(portnames)):
-   openedPort[i] = serial.Serial(portnames[i], 115200, timeout=1)
+   if '/dev/tty' in portnames[i]:
+      openedPort.append(serial.Serial(portnames[i], 115200, timeout=1))
 
-if(ENABLE_MOTORS):
-   MotorDriverPort = openedPort[0]
+motorDriverIndex = 0
+SensorsIndex = 0
+portFunctions = []
+for i in range(0, len(openedPort)):
+   if openedPort[i].isOpen():
+      openedPort[i].write('GET\n')
+      sleep(0.1)
+      portFunctions.append(openedPort[i].readline())
+   else
+      portFunctions.append('Closed')
+   
+for i in range(0, len(portFunctions)):
+   if portFunctions[i] == "Arduino Motor Driver\n"
+      motorDriverIndex = i
+   elif portFunctions[i] == "EchoModule with 9axis, by MtK\n":
+      SensorsIndex = i
+
+MotorDriverPort = openedPort[motorDriverIndex]
 
 print 'Waiting for client...'
 connection, addr = communicationSocket.accept()
