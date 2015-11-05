@@ -131,7 +131,6 @@ int mios = 1000; //Maksymalna Ilość Obrotów Silnika
 void setup()
 {
   Serial.begin(115200);
-  Serial.println("Pololu & Arduino Motor Driver by MtK");
   inputString.reserve(200);
   /*md1i2.init();
   md3i4.init();
@@ -390,12 +389,12 @@ void serialEvent() {
 
 void handleNewMessage()
 {
-  int spaceBar = inputString.indexOf(' ');
-  if (spaceBar != -1)
-  {
-    String buffer = "";
-    buffer.reserve(10);
-    String buffer2 = "";
+//  int spaceBar = inputString.indexOf(' ');
+//  if (spaceBar != -1)
+//  {
+//    String buffer = "";
+//    buffer.reserve(10);
+//    String buffer2 = "";
     String decomposedMessage[7];
     for(int i = 0; i<7; i++)
     {
@@ -403,11 +402,11 @@ void handleNewMessage()
       decomposedMessage[i] = "";
     }
       
-    buffer2.reserve(10);
-    String bufferMotor = "";
-    bufferMotor.reserve(10);
-    for (int i=0; i<spaceBar; i++)
-      buffer += inputString.charAt(i);
+//    buffer2.reserve(10);
+//    String bufferMotor = "";
+//    bufferMotor.reserve(10);
+//    for (int i=0; i<spaceBar; i++)
+//      buffer += inputString.charAt(i);
 
     for(int indexPtr = 0, segmentPtr = 0; indexPtr<(inputString.length()-1) && segmentPtr<7; indexPtr++)
     {
@@ -417,12 +416,16 @@ void handleNewMessage()
         segmentPtr++; 
         indexPtr++;
       }
+      else if (inputString.charAt(indexPtr+1) == '\n')
+         break;
     }
 
 //    spaceBar = inputString.indexOf(' ');
 //    for (int i=spaceBar+1; i<(inputString.length()-1); i++)
 //      buffer2 += inputString.charAt(i);
 
+    if(decomposedMessage[0] == "GET")
+       Serial.println("Arduino Motor Driver");
     if(decomposedMessage[0] == "Set")
     {
       timeOfLastMessageReceived = millis();
@@ -434,6 +437,7 @@ void handleNewMessage()
         else
           u[i] = max(buffer, -mios);
       }
+    }
 
 //      for (int i=0; i<6; i++)
 //      {
@@ -441,12 +445,12 @@ void handleNewMessage()
 //        Serial.print(", ");
 //      }
 //      Serial.println("");
-    }
+//    }
 
-    else if (buffer == "SetKp")
-    {
-      Kp = buffer2.toInt();
-    }
+//    else if (buffer == "SetKp")
+//    {
+//      Kp = buffer2.toInt();
+//    }
 //    else if (buffer == "SetPWM")
 //    {
 //      if(bufferMotor=="motor1")
@@ -459,53 +463,53 @@ void handleNewMessage()
 //      PWMSpeed4 = 4*buffer2.toInt();
 //      SmartDrive = 0;
 //    }
-    else if (buffer == "Print")
-    {
-      if(buffer2 == "Speed")
-      {
-         Serial.println(v1);
-         Serial.println(v2);
-         Serial.println(v3);
-         Serial.println(v4);
-         Serial.println();
-      }
+//    else if (buffer == "Print")
+//    {
+//      if(buffer2 == "Speed")
+//      {
+//         Serial.println(v1);
+//         Serial.println(v2);
+//         Serial.println(v3);
+//         Serial.println(v4);
+//         Serial.println();
+//      }
           
       
-      else if(buffer2 == "Error")
-      {
-        Serial.println(e1);
-        Serial.println(e2);
-        Serial.println(e3);
-        Serial.println(e4);
-        Serial.println();
-      }
-          
-      
-      else if(buffer2 == "Power")
-      {
-        Serial.println(PowerOnMotor1/400);
-        Serial.println(PowerOnMotor2/400);
-        Serial.println(PowerOnMotor3/400);
-        Serial.println(PowerOnMotor4/400);
-        Serial.println();
-      }
-          
-      else if(buffer2 == "ConstSpeed")
-          ConstantPrint = PRINT_SPEED;
-      else if(buffer2 == "ConstDisable")
-          ConstantPrint = NO_PRINT;
-    }
-    else if(buffer == "Kill")
-    {
-      SetSpeed(motor1, 0);
-      SetSpeed(motor2, 0);
-      SetSpeed(motor3, 0);
-      SetSpeed(motor4, 0);
-      SmartDrive = 0;
-    }
-  }
-  else
-    Serial.println("Message ERROR\n\rInvalid command!\n\r");
+//      else if(buffer2 == "Error")
+//      {
+//        Serial.println(e1);
+//        Serial.println(e2);
+//        Serial.println(e3);
+//        Serial.println(e4);
+//        Serial.println();
+//      }
+//          
+//      
+//      else if(buffer2 == "Power")
+//      {
+//        Serial.println(PowerOnMotor1/400);
+//        Serial.println(PowerOnMotor2/400);
+//        Serial.println(PowerOnMotor3/400);
+//        Serial.println(PowerOnMotor4/400);
+//        Serial.println();
+//      }
+//          
+//      else if(buffer2 == "ConstSpeed")
+//          ConstantPrint = PRINT_SPEED;
+//      else if(buffer2 == "ConstDisable")
+//          ConstantPrint = NO_PRINT;
+//    }
+//    else if(buffer == "Kill")
+//    {
+//      SetSpeed(motor1, 0);
+//      SetSpeed(motor2, 0);
+//      SetSpeed(motor3, 0);
+//      SetSpeed(motor4, 0);
+//      SmartDrive = 0;
+//    }
+//  }
+//  else
+//    Serial.println("Message ERROR\n\rInvalid command!\n\r");
       
   newMessageReceived = false;
   inputString.remove(0);
