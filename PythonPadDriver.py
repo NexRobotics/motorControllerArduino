@@ -8,8 +8,8 @@ from time import sleep
 from time import time
 import thread
 
-ENABLE_MOTORS = True
-DEBUG = False
+ENABLE_MOTORS = False
+DEBUG = True
 
 HOST = ''
 PORT = 50007
@@ -66,13 +66,12 @@ if not DEBUG:
 
 connection.settimeout(0.05)
 
-motorPower = 110
+motorPower = 100.0
 RPower = 0
 LPower = 0
 receivedData = ''
 lastDataReceivedTime = time()
-
-Commands = ['UP;1', 'DOWN;1', 'LEFT;1', 'RIGHT;1']
+MAXRANGE = 32768
 
 sleep(2)
 
@@ -89,19 +88,13 @@ if MotorDriverPort.isOpen() or not ENABLE_MOTORS:
                lastDataReceivedTime = time()
                RPower = 0
                LPower = 0
-               receivedData = receivedData.split()
-               if anyEqual(receivedData, Commands[0]):
-                  RPower = RPower + motorPower
-                  LPower = LPower + motorPower
-               if anyEqual(receivedData, Commands[1]):
-                  RPower = RPower - motorPower
-                  LPower = LPower - motorPower
-               if anyEqual(receivedData, Commands[2]):
-                  RPower = RPower + motorPower
-                  LPower = LPower - motorPower
-               if anyEqual(receivedData, Commands[3]):
-                  RPower = RPower - motorPower
-                  LPower = LPower + motorPower
+               receivedData = receivedData.split(";")
+	       for i in range(1, len(receivedData)+1):
+			if (receivedData[-i] == "\n"):
+				steeringData = receivedData[-i-1].split(",")
+				break
+               RPower = int((motorPower * steeringData[0])/MAXRANGE) - int((motorPower * steeringData[1])/MAXRANGE)
+               LPower = int((motorPower * steeringData[0])/MAXRANGE) + int((motorPower * steeringData[1])/MAXRANGE)
 
                if(ENABLE_MOTORS):
                   MotorDriverPort.write('Set '+ str(LPower) +' '+ str(RPower) +' '+ str(LPower) +' '+ str(RPower) +' '+ str(LPower) +' '+ str(RPower) +'\n')
