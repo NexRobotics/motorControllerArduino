@@ -66,7 +66,7 @@ if not DEBUG:
 
 connection.settimeout(0.05)
 
-motorPower = 90
+motorPower = 110
 RPower = 0
 LPower = 0
 receivedData = ''
