@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 import socket
-HOST = '192.168.43.6'
+HOST = '192.168.1.102'
 PORT = 50007
 
 
