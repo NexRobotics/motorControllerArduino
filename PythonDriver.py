@@ -12,7 +12,7 @@ ENABLE_MOTORS = True
 DEBUG = False
 
 HOST = ''
-PORT = 50007
+PORT = 50008
 
 def anyEqual(list, value):
     for i in range(0, len(list)):
@@ -66,7 +66,7 @@ if not DEBUG:
 
 connection.settimeout(0.05)
 
-motorPower = 110
+motorPower = 120
 RPower = 0
 LPower = 0
 receivedData = ''

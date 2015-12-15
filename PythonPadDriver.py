@@ -8,10 +8,10 @@ from time import sleep
 from time import time
 import thread
 
-ENABLE_MOTORS = False
+ENABLE_MOTORS = True
 DEBUG = True
 
-HOST = ''
+HOST = '192.168.43.9'
 PORT = 50007
 
 def anyEqual(list, value):
@@ -21,8 +21,10 @@ def anyEqual(list, value):
     return 0
 
 communicationSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-communicationSocket.bind((HOST, PORT))
-communicationSocket.listen(1)
+#communicationSocket.bind((HOST, PORT))
+#communicationSocket.listen(1)
+
+communicationSocket.connect((HOST, 1234))
 
 print 'Connecting device...'
 portnames = listPorts.serial_ports()
@@ -56,15 +58,15 @@ for i in range(0, len(portFunctions)):
 
 MotorDriverPort = openedPort[motorDriverIndex]
 
-print 'Waiting for client on port', PORT
-connection, addr = communicationSocket.accept()
+#print 'Waiting for client on port', PORT
+#connection, addr = communicationSocket.accept()
 
 print 'Client connected...'
 
 if not DEBUG:
    print 'Silent mode activated...'
 
-connection.settimeout(0.05)
+#connection.settimeout(0.05)
 
 motorPower = 100.0
 RPower = 0
@@ -80,9 +82,11 @@ lastDataReceivedTime = time()
 if MotorDriverPort.isOpen() or not ENABLE_MOTORS:
    try:
       while 1:
-         readable, writable, exceptional = select([connection], [], [], 0)
+         #readable, writable, exceptional = select([connection], [], [], 0)
+	 readable, writable, exceptional = select([communicationSocket], [], [], 0)
          if readable:
-            receivedData = connection.recv(1024)
+            #receivedData = connection.recv(1024)
+	    receivedData = communicationSocket.recv(1024)
 
             if receivedData:
                lastDataReceivedTime = time()
@@ -93,8 +97,8 @@ if MotorDriverPort.isOpen() or not ENABLE_MOTORS:
 			if (receivedData[-i] == "\n"):
 				steeringData = receivedData[-i-1].split(",")
 				break
-               RPower = int((motorPower * steeringData[0])/MAXRANGE) - int((motorPower * steeringData[1])/MAXRANGE)
-               LPower = int((motorPower * steeringData[0])/MAXRANGE) + int((motorPower * steeringData[1])/MAXRANGE)
+               RPower = int((motorPower * float(steeringData[0]))/MAXRANGE) - int((motorPower * float(steeringData[1]))/MAXRANGE)
+               LPower = int((motorPower * float(steeringData[0]))/MAXRANGE) + int((motorPower * float(steeringData[1]))/MAXRANGE)
 
                if(ENABLE_MOTORS):
                   MotorDriverPort.write('Set '+ str(LPower) +' '+ str(RPower) +' '+ str(LPower) +' '+ str(RPower) +' '+ str(LPower) +' '+ str(RPower) +'\n')
@@ -121,6 +125,7 @@ if MotorDriverPort.isOpen() or not ENABLE_MOTORS:
 
    finally:
       #print '0 0'
-      connection.close()
+      communicationSocket.close()
+      #connection.close()
       MotorDriverPort.write('Set 0 0 0 0 0 0\n')
       MotorDriverPort.close()
