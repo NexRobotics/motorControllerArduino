@@ -21,10 +21,9 @@ def anyEqual(list, value):
     return 0
 
 communicationSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-#communicationSocket.bind((HOST, PORT))
-#communicationSocket.listen(1)
 
-communicationSocket.connect((HOST, 1234))
+communicationSocket.bind((HOST, PORT))
+communicationSocket.listen(1)
 
 print 'Connecting device...'
 portnames = listPorts.serial_ports()
@@ -57,9 +56,6 @@ for i in range(0, len(portFunctions)):
       openedPort[i].close()
 
 MotorDriverPort = openedPort[motorDriverIndex]
-
-#print 'Waiting for client on port', PORT
-#connection, addr = communicationSocket.accept()
 
 print 'Client connected...'
 
